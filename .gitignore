@@ -1,0 +1,4 @@
+*.pyc
+.index/
+*.gif
+login_info
