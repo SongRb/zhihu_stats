@@ -93,9 +93,9 @@ class zhihu_session:
 	def get_articles_raw(self, user, start, pagesize):
 		return self._get_userdata_api('articles', user, start, pagesize)
 
-	def get_activities_raw(self, user, afterid, pagesize): # id of action
+	def get_article_content_raw(self, article):
 		return json.loads(self.opener.open(urllib2.Request(
-			url = 'https://www.zhihu.com/api/v4/members/{0}/activities?limit={1}&after_id={2}'.format(user, pagesize, afterid)
+			url = 'https://zhuanlan.zhihu.com/api/posts/{0}'.format(article)
 		)).read())
 
 	def get_question_watchers_raw(self, questionid, start):
@@ -117,6 +117,11 @@ class zhihu_session:
 	def get_answer_comments_raw(self, answerid, page): # page starts from 1
 		return json.loads(self.opener.open(urllib2.Request(
 			url = 'https://www.zhihu.com/r/answers/{0}/comments?page={1}'.format(answerid, page)
+		)).read())
+
+	def get_article_comments_raw(self, articleid, start, pagesize):
+		return json.loads(self.opener.open(urllib2.Request(
+			url = 'https://zhuanlan.zhihu.com/api/posts/{0}/comments?limit={1}&offset={2}'.format(articleid, pagesize, start)
 		)).read())
 
 
@@ -142,6 +147,8 @@ def main():
 
 	session = zhihu_session()
 	session.login_email(email, password)
+	with open('children_topics.txt', 'w') as fout:
+		json.dump(session.get_children_topics(19632577), fout)
 	# with open('test.txt', 'w') as fout:
 	# 	fout.write(str(session.get_question_answer_list_raw(53568452, 1000, 10)))
 	# with open('followees.txt', 'w') as fout:
@@ -155,11 +162,15 @@ def main():
 	# with open('articles.txt', 'w') as fout:
 	# 	json.dump(session.get_articles_raw('excited-vczh', 2, 10), fout)
 	# print session.get_followers_raw('niu-yue-lao-li-xiao-chang', 0, 10)
-	with open('question_comments.txt', 'w') as fout:
-		fout.write(session.get_question_comments_raw(4087751))
-	with open('answer_comments.txt', 'w') as fout:
-		json.dump(session.get_answer_comments_raw(49741710, 1), fout)
-	# with open('test.txt', 'w') as fout:
+	# with open('question_comments.txt', 'w') as fout:
+	# 	fout.write(session.get_question_comments_raw(4087751))
+	# with open('answer_comments.txt', 'w') as fout:
+	# 	json.dump(session.get_answer_comments_raw(49741710, 1), fout)
+	# with open('articles.txt', 'w') as fout:
+	# 	json.dump(session.get_articles_raw('excited-vczh', 0, 10), fout)
+	# with open('article_content.txt', 'w') as fout:
+	# 	json.dump(session.get_article_content_raw(24543157), fout)
+	# with open('question_watchers.txt', 'w') as fout:
 	# 	fout.write(session.get_question_watchers_raw(49741710, 1)['msg'][1].encode('utf8'))
 	# print session.get_question_watchers_raw(49741710, 1)
 

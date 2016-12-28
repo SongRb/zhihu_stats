@@ -4,7 +4,7 @@ from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.index import DirectoryReader
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause
+from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause, Sort, SortField
 from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig
 from org.apache.lucene.util import Version
 import zhihu_page_analyzer as zh_pganlz
@@ -23,16 +23,14 @@ def main():
 	searcher = IndexSearcher(DirectoryReader.open(SimpleFSDirectory(File(INDEXED_FOLDER))))
 	analyzer = WhitespaceAnalyzer()
 	query = BooleanQuery()
-	query.add(QueryParser('type', analyzer).parse('user topic question comment article answer'), BooleanClause.Occur.SHOULD)
-	res = searcher.search(query, 100)
+	query.add(QueryParser('type', analyzer).parse('answer'), BooleanClause.Occur.MUST)
+	res = searcher.search(query, 100, Sort(SortField('Ilikes', SortField.Type.INT)))
 	while True:
 		for x in res.scoreDocs:
 			doc = searcher.doc(x.doc)
-			obj = vars(zh_pganlz)[doc['type']]()
-			zh_pganlz.document_to_obj(doc, obj)
-			zh_pganlz.print_object(obj)
+			zh_pganlz.print_object(zh_pganlz.document_to_obj(doc))
 			print
-		res = searcher.searchAfter(res.scoreDocs[-1], query, 100)
+		res = searcher.searchAfter(res.scoreDocs[-1], query, 100, Sort(SortField('Ilikes', SortField.Type.INT)))
 		raw_input('Press enter...')
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-import lucene, sys, re, bs4
+import lucene, sys, re, bs4, jieba
 from org.apache.lucene.document import Document, Field, FieldType, StringField, TextField
 from zhihu_settings import *
 
@@ -42,20 +42,19 @@ def obj_to_document(obj):
 	res.add(StringField('index', str(obj.index), Field.Store.YES))
 	res.add(StringField('type', obj.__class__.__name__, Field.Store.YES))
 	for k, v in vars(obj.data).items():
-		# TODO cut the text
 		if v is None:
-			res.add(StringField(LT_NONE + k, '', Field.Store.NO))
+			res.add(Field(LT_NONE + k, '', Field.Store.YES, Field.Index.NO))
 		elif isinstance(v, list):
 			if len(v) > 0 and isinstance(v[0], int):
-				res.add(TextField(LT_INTLIST + k, ' '.join((str(x) for x in v)), Field.Store.YES))
+				res.add(TextField(LT_INTLIST + k, ' '.join((str(x) for x in set(v))), Field.Store.YES))
 			else:
-				res.add(TextField(LT_LIST + k, ' '.join(v), Field.Store.YES))
+				res.add(TextField(LT_LIST + k, ' '.join(list(set(v))), Field.Store.YES))
 		elif isinstance(v, str) or isinstance(v, unicode):
-			res.add(StringField(LT_STRING + k, v, Field.Store.YES))
-			res.add(TextField(LT_FOR_QUERY + k, v, Field.Store.NO))
+			res.add(Field(LT_STRING + k, v, Field.Store.YES, Field.Index.NO))
+			res.add(TextField(LT_FOR_QUERY + k, ' '.join(jieba.lcut(v)), Field.Store.NO))
 		elif isinstance(v, hyper_text):
-			res.add(StringField(LT_HYPERTEXT + k, v.raw, Field.Store.YES))
-			res.add(TextField(LT_FOR_QUERY + k, v.text, Field.Store.NO))
+			res.add(Field(LT_HYPERTEXT + k, v.raw, Field.Store.YES, Field.Index.NO))
+			res.add(TextField(LT_FOR_QUERY + k, ' '.join(jieba.lcut(v.text)), Field.Store.NO))
 		elif isinstance(v, bool):
 			if v:
 				vs = '1'
@@ -67,7 +66,8 @@ def obj_to_document(obj):
 		else:
 			raise Exception('unrecognized data type')
 	return res
-def document_to_obj(doc, obj):
+def document_to_obj(doc):
+	obj = globals()[doc['type']]()
 	for field in list(doc.fields.toArray()):
 		rf = Field.cast_(field)
 		k, v = rf.name(), rf.stringValue()
@@ -102,6 +102,7 @@ def document_to_obj(doc, obj):
 				setattr(obj.data, k[1:], int(v))
 			else:
 				raise Exception('unrecognized property: ' + k)
+	return obj
 
 class user_data:
 	def __init__(self):
@@ -110,8 +111,8 @@ class user_data:
 		self.followed_indices = None
 		self.asked_questions = None
 class user:
-	def __init__(self):
-		self.index = None
+	def __init__(self, idx = None):
+		self.index = idx
 		self.data = user_data()
 
 	def parse_personal_info_page(self, pg):
@@ -122,9 +123,9 @@ class user:
 		if len(desccand) > 0:
 			self.data.description = ' '.join(list(desccand[0].stripped_strings))
 		else:
-			self.data.description = ' '.join(list(soup.select(
-				'#ProfileHeader .ProfileHeader-main .ProfileHeader-contentBody .ProfileHeader-info'
-			)[0].stripped_strings))
+			desccand = soup.select('#ProfileHeader .ProfileHeader-main .ProfileHeader-contentBody .ProfileHeader-info')
+			if len(desccand) > 0:
+				self.data.description = ' '.join(list(desccand[0].stripped_strings))
 
 class topic_data:
 	def __init__(self):
@@ -133,8 +134,8 @@ class topic_data:
 		self.child_tag_indices = None
 		self.watched_indices = None
 class topic:
-	def __init__(self):
-		self.index = 0
+	def __init__(self, idx = None):
+		self.index = idx
 		self.data = topic_data()
 
 	@staticmethod
@@ -158,21 +159,17 @@ class topic:
 class answer_data:
 	def __init__(self):
 		self.text = None
-		self.author = None
+		self.author_index = None
 		self.likes = None
 		self.question_index = None
 class answer:
-	def __init__(self):
-		self.index = 0
+	def __init__(self, idx = None):
+		self.index = idx
 		self.data = answer_data()
 
 	def parse(self, tag): # zm-item-answer
 		remove_edit_buttons(tag)
-		try:
-			self.index = int(tag['data-aid']) # FIXME mysterious bug here
-		except:
-			print tag.attrs
-			raise
+		self.index = int(tag['data-aid']) # FIXME mysterious bug here
 		self.data.text = hyper_text(tag.select('.zm-item-rich-text > .zm-editable-content')[0])
 		answerhead = tag.select('.answer-head')[0]
 		self.data.likes = int(answerhead.select('[data-votecount]')[0]['data-votecount'])
@@ -188,8 +185,8 @@ class question_data:
 		self.author_index = None
 		self.watched_indices = None
 class question:
-	def __init__(self):
-		self.index = 0
+	def __init__(self, idx = None):
+		self.index = idx
 		self.data = question_data()
 
 	def parse_page(self, pg):
@@ -224,8 +221,8 @@ class comment_data:
 		self.author_index = None
 		self.likes = None
 class comment:
-	def __init__(self):
-		self.index = None
+	def __init__(self, idx = None):
+		self.index = idx
 		self.data = comment_data()
 
 	def parse_question_comment(self, tag):
@@ -246,75 +243,58 @@ class comment:
 
 class article_data:
 	def __init__(self):
+		self.title = None
+		self.tag_indices = None
+		self.contents = None
 		self.likes = None
-		self.comments = None
 class article:
-	def __init__(self):
-		self.index = None
+	def __init__(self, idx = None):
+		self.index = idx
+		self.data = article_data()
 
-def print_object(obj, depth = 0):
-	def write_depth(depth):
-		sys.stdout.write('    ' * depth)
+def print_object(obj, depth = 0, out = sys.stdout):
+	def write_depth(depth, out):
+		out.write('    ' * depth)
 
-	sys.stdout.write('<{0}>'.format(obj.__class__.__name__))
+	out.write('<{0}>'.format(obj.__class__.__name__))
 	if obj is None:
-		sys.stdout.write('\n')
+		out.write('\n')
 	elif isinstance(obj, str) or isinstance(obj, unicode):
-		sys.stdout.write(u'[{0}] "{1}"\n'.format(len(obj), obj))
+		out.write(u'[{0}] "{1}"\n'.format(len(obj), obj))
 	elif isinstance(obj, list) or isinstance(obj, tuple):
-		sys.stdout.write('[{0}] {{\n'.format(len(obj)))
+		out.write('[{0}] {{\n'.format(len(obj)))
 		for x in obj:
-			write_depth(depth + 1)
-			print_object(x, depth + 1)
-		write_depth(depth)
-		sys.stdout.write('}\n')
+			write_depth(depth + 1, out)
+			print_object(x, depth + 1, out)
+		write_depth(depth, out)
+		out.write('}\n')
 	elif isinstance(obj, dict):
-		sys.stdout.write(' {\n')
+		out.write(' {\n')
 		for k, v in obj.items():
-			write_depth(depth + 1)
-			print_object(k, depth + 1)
-			write_depth(depth + 1)
-			sys.stdout.write(' ->\n')
-			write_depth(depth + 2)
-			print_object(v, depth + 2)
-		write_depth(depth)
-		sys.stdout.write('}\n')
+			write_depth(depth + 1, out)
+			print_object(k, depth + 1, out)
+			write_depth(depth + 1, out)
+			out.write(' ->\n')
+			write_depth(depth + 2, out)
+			print_object(v, depth + 2, out)
+		write_depth(depth, out)
+		out.write('}\n')
 	elif isinstance(obj, bs4.Tag):
-		sys.stdout.write(str(obj) + '\n')
+		out.write(str(obj) + '\n')
 	elif isinstance(obj, hyper_text):
-		sys.stdout.write(' ' + obj.text + '\n')
+		out.write(' ' + obj.text + '\n')
 	elif obj.__class__.__name__ == 'function':
-		sys.stdout.write(' ' + obj.func_name + '\n')
+		out.write(' ' + obj.func_name + '\n')
 	else:
 		try:
 			props = vars(obj)
 		except:
-			sys.stdout.write(' {0}\n'.format(str(obj)))
+			out.write(' {0}\n'.format(str(obj)))
 		else:
-			sys.stdout.write(' {\n')
+			out.write(' {\n')
 			for k, v in props.items():
-				write_depth(depth + 1)
-				sys.stdout.write(k + ': ')
-				print_object(v, depth + 1)
-			write_depth(depth)
-			sys.stdout.write('}\n')
-
-def main():
-	if len(sys.argv) < 2:
-		print 'Usage:\t', sys.argv[0], '<html file>'
-		return
-	with open(sys.argv[1], 'r') as fin:
-		x = fin.read()
-	result = question()
-	result.parse_page(x)
-	print
-	print_object(result)
-	print
-	print 'document:'
-	print
-	x = question()
-	document_to_obj(obj_to_document(result), x)
-	print_object(x)
-
-if __name__ == '__main__':
-	main()
+				write_depth(depth + 1, out)
+				out.write(k + ': ')
+				print_object(v, depth + 1, out)
+			write_depth(depth, out)
+			out.write('}\n')
