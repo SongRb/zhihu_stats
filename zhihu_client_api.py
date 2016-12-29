@@ -8,6 +8,7 @@ REQUEST_HEADERS = {
 	'Host': 'www.zhihu.com'
 }
 
+# This branch is a test for branch and pull request
 class zhihu_session:
 	class redirect_handler(urllib2.HTTPRedirectHandler):
 		def http_error_301(self, req, fp, code, msg, headers):
