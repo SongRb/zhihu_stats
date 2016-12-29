@@ -40,6 +40,15 @@ LT_HYPERTEXT = 'H'
 LT_INT = 'I'
 LT_BOOL = 'B'
 
+def obj_to_json(obj):
+	res = {'index': obj.index, 'type': obj.__class__.__name__}
+	for k, v in vars(obj.data).items():
+		if isinstance(v, hyper_text):
+			res[k] = v.raw
+		else:
+			res[k] = v
+	return res
+
 def obj_to_document(obj):
 	res = Document()
 	res.add(StringField('index', str(obj.index), Field.Store.YES))

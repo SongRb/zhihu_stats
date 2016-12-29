@@ -116,6 +116,8 @@ def crawl_until_stop(session):
 	default_query = BooleanQuery()
 	default_query.add(QueryParser('finish_time', WhitespaceAnalyzer()).parse('0'), BooleanClause.Occur.MUST)
 
+	errcount = 0
+
 	while not _stop:
 		info_logger.write('acquiring new tasks... ')
 		task_reader = zh_iatd.create_searcher(TASK_FOLDER)
@@ -127,8 +129,6 @@ def crawl_until_stop(session):
 		task_reader.close()
 
 		task_writer = zh_iatd.create_index_writer(TASK_FOLDER)
-
-		errcount = 0
 
 		for doct in resdocs:
 			curt = task()

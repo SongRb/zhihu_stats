@@ -59,6 +59,7 @@ def query_object(searcher, objid, objtype):
 		raise Exception('database corrupted')
 	return zh_pganlz.document_to_obj(searcher.searcher.doc(res.scoreDocs[0].doc)), query
 
+
 def get_and_parse_question_data(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.question)
@@ -73,6 +74,7 @@ def get_and_parse_question_data(session, tsk):
 	tsk.result_tasks.append(crawler_task(get_and_parse_answers, tsk.prm_id, 0, 10))
 	tsk.result_tasks.append(crawler_task(get_and_parse_question_comments, tsk.prm_id, p_extra = resourceid))
 	searcher.close()
+
 def get_and_parse_user_data(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.user)
@@ -85,6 +87,7 @@ def get_and_parse_user_data(session, tsk):
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_asked, tsk.result_rep_obj.index, 0, 10))
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_articles, tsk.result_rep_obj.index, 0, 10))
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_watched_topics, tsk.result_rep_obj.index, 0, 10))
+
 def get_and_parse_topic_data(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.topic)
@@ -94,6 +97,7 @@ def get_and_parse_topic_data(session, tsk):
 	)).read(), HTML_PARSER))
 	# generate subtasks
 	tsk.result_tasks.append(crawler_task(get_and_parse_topic_children_indices, tsk.result_rep_obj.index, ''))
+
 def get_and_parse_article_data(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.article)
@@ -111,6 +115,7 @@ def get_and_parse_article_data(session, tsk):
 			tsk.result_new.append(zh_pganlz.topic(x))
 			tsk.result_tasks.append(crawler_task(get_and_parse_topic_data, x))
 	tsk.result_tasks.append(crawler_task(get_and_parse_article_comments, tsk.prm_id, 0, 10))
+
 
 def get_and_parse_answers(session, tsk):
 	searcher = create_searcher()
@@ -136,6 +141,7 @@ def get_and_parse_answers(session, tsk):
 		tsk.result_tasks.append(crawler_task(get_and_parse_answer_comments, x.index, 1))
 	tsk.result_new += newuser_list
 	searcher.close()
+
 def get_and_parse_user_followed(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.user)
@@ -158,6 +164,7 @@ def get_and_parse_user_followed(session, tsk):
 	if foljson['paging']['is_end']:
 		return
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_followed, tsk.prm_id, tsk.prm_start + tsk.prm_pagesize, tsk.prm_pagesize))
+
 def get_and_parse_user_asked(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.user)
@@ -178,6 +185,7 @@ def get_and_parse_user_asked(session, tsk):
 	if askjson['paging']['is_end']:
 		return
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_asked, tsk.prm_id, tsk.prm_start + tsk.prm_pagesize, tsk.prm_pagesize))
+
 def get_and_parse_question_comments(session, tsk):
 	searcher = create_searcher()
 	soup = bs4.BeautifulSoup(session.get_question_comments_raw(tsk.prm_extra), HTML_PARSER)
@@ -199,6 +207,7 @@ def get_and_parse_question_comments(session, tsk):
 				tsk.result_tasks.append(crawler_task(get_and_parse_user_data, x.data.author_index))
 	tsk.result_new += newuser_list
 	searcher.close()
+
 def get_and_parse_answer_comments(session, tsk):
 	commjson = session.get_answer_comments_raw(tsk.prm_id, tsk.prm_start)
 	if len(commjson['data']) == 0:
@@ -232,6 +241,7 @@ def get_and_parse_answer_comments(session, tsk):
 	tsk.result_new += newuser_list
 	tsk.result_tasks.append(crawler_task(get_and_parse_answer_comments, tsk.prm_id, tsk.prm_start + 1))
 	searcher.close()
+
 def get_and_parse_user_articles(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.user)
@@ -253,6 +263,7 @@ def get_and_parse_user_articles(session, tsk):
 	if askjson['paging']['is_end']:
 		return
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_articles, tsk.prm_id, tsk.prm_start + tsk.prm_pagesize, tsk.prm_pagesize))
+
 def get_and_parse_article_comments(session, tsk):
 	commjson = session.get_article_comments_raw(tsk.prm_id, tsk.prm_start, tsk.prm_pagesize)
 	if len(commjson) == 0:
@@ -283,6 +294,7 @@ def get_and_parse_article_comments(session, tsk):
 	tsk.result_new += newuser_lst
 	tsk.result_tasks.append(crawler_task(get_and_parse_article_comments, tsk.prm_id, tsk.prm_start + tsk.prm_pagesize, tsk.prm_pagesize))
 	searcher.close()
+
 def get_and_parse_topic_children_indices(session, tsk):
 	searcher = create_searcher()
 	ansjson = session.get_children_topics(tsk.prm_id, tsk.prm_start)
@@ -307,6 +319,7 @@ def get_and_parse_topic_children_indices(session, tsk):
 	if not nextpg is None:
 		tsk.result_tasks.append(crawler_task(get_and_parse_topic_children_indices, tsk.prm_id, nextpg))
 	searcher.close()
+
 def get_and_parse_user_watched_topics(session, tsk):
 	searcher = create_searcher()
 	tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.user)
@@ -328,6 +341,7 @@ def get_and_parse_user_watched_topics(session, tsk):
 	if askjson['paging']['is_end']:
 		return
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_watched_topics, tsk.prm_id, tsk.prm_start + tsk.prm_pagesize, tsk.prm_pagesize))
+
 
 def main():
 	_vm = lucene.initVM(vmargs = ['-Djava.awt.headless=true'])
