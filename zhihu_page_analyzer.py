@@ -1,8 +1,6 @@
-import lucene, sys, re, bs4, jieba
+import lucene, sys, re, bs4, jieba, datetime
 from org.apache.lucene.document import Document, Field, FieldType, StringField, TextField
 from zhihu_settings import *
-
-_vm = lucene.initVM(vmargs = ['-Djava.awt.headless=true'])
 
 def clean_soup(soup):
 	for x in soup.find_all(re.compile('^(script|noscript|style|object)$', re.IGNORECASE)):
@@ -27,6 +25,11 @@ class hyper_text:
 
 	def as_soup(self):
 		return bs4.BeautifulSoup(self.raw, HTML_PARSER)
+
+def date_to_int(dt):
+	return dt.year * 10000 + dt.month * 100 + dt.day
+def parse_javascript_date(dstr):
+	return datetime.datetime.strptime(dstr.split('T')[0], '%Y-%m-%d').date()
 
 LT_NONE = 'N'
 LT_LIST = 'L'
@@ -108,7 +111,8 @@ class user_data:
 	def __init__(self):
 		self.alias = None
 		self.description = None
-		self.followed_indices = None
+		self.followed_users = None
+		self.followed_topics = None
 		self.asked_questions = None
 class user:
 	def __init__(self, idx = None):
@@ -162,6 +166,7 @@ class answer_data:
 		self.author_index = None
 		self.likes = None
 		self.question_index = None
+		self.date = None
 class answer:
 	def __init__(self, idx = None):
 		self.index = idx
@@ -176,6 +181,7 @@ class answer:
 		authortag = answerhead.select('.zm-item-answer-author-info')[0].select('.summary-wrapper .author-link-line a')
 		if len(authortag) > 0:
 			self.data.author = authortag[0]['href'].split('/')[-1]
+		self.data.date = date_to_int(datetime.datetime.strptime(''.join(tag.select('.zm-item-meta .answer-date-link')[0].string.split()[1:]), '%Y-%m-%d').date())
 
 class question_data:
 	def __init__(self):
@@ -220,6 +226,7 @@ class comment_data:
 		self.response_to_index = None
 		self.author_index = None
 		self.likes = None
+		self.date = None
 class comment:
 	def __init__(self, idx = None):
 		self.index = idx
@@ -240,6 +247,7 @@ class comment:
 				self.data.author_index = authortag[0]['href'].split('/')[-1]
 		self.data.text = hyper_text(tag.select('.zm-comment-content')[0])
 		self.data.likes = int(tag.select('.zm-comment-ft .like-num em')[0].string)
+		self.data.date = date_to_int(datetime.datetime.strptime(tag.select('.zm-comment-ft .date')[0].string, '%Y-%m-%d').date())
 
 class article_data:
 	def __init__(self):
@@ -247,6 +255,7 @@ class article_data:
 		self.tag_indices = None
 		self.contents = None
 		self.likes = None
+		self.date = None
 class article:
 	def __init__(self, idx = None):
 		self.index = idx

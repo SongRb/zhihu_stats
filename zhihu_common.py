@@ -9,5 +9,8 @@ class external_console_logger:
 		self._disp = exec_in_new_console(('tail', '-f', logfile))
 
 	def write(self, s):
-		self._file.write(s)
+		if isinstance(s, unicode):
+			self._file.write(s.encode('utf8'))
+		else:
+			self._file.write(s)
 		self._file.flush()

@@ -11,9 +11,9 @@ REQUEST_HEADERS = {
 class zhihu_session:
 	class redirect_handler(urllib2.HTTPRedirectHandler):
 		def http_error_301(self, req, fp, code, msg, headers):
-			print 'REDIRECT 301'
+			pass
 		def http_error_302(self, req, fp, code, msg, headers):
-			print 'REDIRECT 302'
+			pass
 
 	def __init__(self):
 		self.cookies = cookielib.CookieJar()
@@ -92,6 +92,8 @@ class zhihu_session:
 		return self._get_userdata_api('favlists', user, start, pagesize)
 	def get_articles_raw(self, user, start, pagesize):
 		return self._get_userdata_api('articles', user, start, pagesize)
+	def get_watched_topics_raw(self, user, start, pagesize):
+		return self._get_userdata_api('following-topic-contributions', user, start, pagesize)
 
 	def get_article_content_raw(self, article):
 		return json.loads(self.opener.open(urllib2.Request(
