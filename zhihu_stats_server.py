@@ -40,6 +40,7 @@ class SS_search:
 
 		searcher = zh_iatd.create_searcher()
 		query = BooleanQuery()
+		# TODO querying with inexistant term gives garbage results
 		if 'index' in user_data.keys():
 			query.add(build_anyterm_query('index', user_data['index'].split()), BooleanClause.Occur.MUST)
 		if 'type' in user_data.keys():

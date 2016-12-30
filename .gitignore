@@ -1,6 +1,4 @@
 *.pyc
 *.gif
 login_info
-.index/
-.crawler_tasks/
-.idea/
+.*/

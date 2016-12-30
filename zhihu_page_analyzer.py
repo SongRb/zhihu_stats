@@ -31,6 +31,9 @@ def date_to_int(dt):
 def parse_javascript_date(dstr):
 	return datetime.datetime.strptime(dstr.split('T')[0], '%Y-%m-%d').date()
 
+LTPF_TYPE = '_T'
+LTPF_FOR_QUERY = '_Q'
+
 LT_NONE = 'N'
 LT_LIST = 'L'
 LT_INTLIST = 'O'
@@ -55,28 +58,36 @@ def obj_to_document(obj):
 	res.add(StringField('type', obj.__class__.__name__, Field.Store.YES))
 	for k, v in vars(obj.data).items():
 		if v is None:
-			res.add(Field(LT_NONE + k, '', Field.Store.YES, Field.Index.NO))
+			res.add(Field(k, '', Field.Store.YES, Field.Index.NO))
+			fieldtype = LT_NONE
 		elif isinstance(v, list):
 			if len(v) > 0 and isinstance(v[0], int):
-				res.add(TextField(LT_INTLIST + k, ' '.join((str(x) for x in set(v))), Field.Store.YES))
+				res.add(TextField(k, ' '.join((str(x) for x in set(v))), Field.Store.YES))
+				fieldtype = LT_INTLIST
 			else:
-				res.add(TextField(LT_LIST + k, ' '.join(list(set(v))), Field.Store.YES))
+				res.add(TextField(k, ' '.join(list(set(v))), Field.Store.YES))
+				fieldtype = LT_LIST
 		elif isinstance(v, str) or isinstance(v, unicode):
-			res.add(Field(LT_STRING + k, v, Field.Store.YES, Field.Index.NO))
-			res.add(TextField(LT_FOR_QUERY + k, ' '.join(jieba.lcut(v)), Field.Store.NO))
+			res.add(Field(k, v, Field.Store.YES, Field.Index.NO))
+			res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut(v)), Field.Store.NO))
+			fieldtype = LT_STRING
 		elif isinstance(v, hyper_text):
-			res.add(Field(LT_HYPERTEXT + k, v.raw, Field.Store.YES, Field.Index.NO))
-			res.add(TextField(LT_FOR_QUERY + k, ' '.join(jieba.lcut(v.text)), Field.Store.NO))
+			res.add(Field(k, v.raw, Field.Store.YES, Field.Index.NO))
+			res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut(v.text)), Field.Store.NO))
+			fieldtype = LT_HYPERTEXT
 		elif isinstance(v, bool):
 			if v:
 				vs = '1'
 			else:
 				vs = '0'
-			res.add(StringField(LT_BOOL + k, vs, Field.Store.YES))
+			res.add(StringField(k, vs, Field.Store.YES))
+			fieldtype = LT_BOOL
 		elif isinstance(v, int) or isinstance(v, long):
-			res.add(StringField(LT_INT + k, str(v), Field.Store.YES))
+			res.add(StringField(k, str(v), Field.Store.YES))
+			fieldtype = LT_INT
 		else:
 			raise Exception('unrecognized data type')
+		res.add(Field(k + LTPF_TYPE, fieldtype, Field.Store.YES, Field.Index.NO))
 	return res
 def document_to_obj(doc):
 	obj = globals()[doc['type']]()
@@ -91,29 +102,29 @@ def document_to_obj(doc):
 			else:
 				obj.index = int(v)
 		else:
-			if k[0] == LT_FOR_QUERY:
-				pass
-			elif k[0] == LT_NONE:
-				setattr(obj.data, k[1:], None)
-			elif k[0] == LT_LIST:
-				setattr(obj.data, k[1:], v.split())
-			elif k[0] == LT_INTLIST:
-				setattr(obj.data, k[1:], [int(x) for x in v.split()])
-			elif k[0] == LT_STRING:
-				setattr(obj.data, k[1:], v)
-			elif k[0] == LT_HYPERTEXT:
-				setattr(obj.data, k[1:], hyper_text(v))
-			elif k[0] == LT_BOOL:
-				if v == '1':
-					setattr(obj.data, k[1:], True)
-				elif v == '0':
-					setattr(obj.data, k[1:], False)
+			if not (k.endswith(LTPF_TYPE) or k.endswith(LTPF_FOR_QUERY)):
+				fieldtype = doc[k + LTPF_TYPE]
+				if fieldtype == LT_NONE:
+					setattr(obj.data, k, None)
+				elif fieldtype == LT_LIST:
+					setattr(obj.data, k, v.split())
+				elif fieldtype == LT_INTLIST:
+					setattr(obj.data, k, [int(x) for x in v.split()])
+				elif fieldtype == LT_STRING:
+					setattr(obj.data, k, v)
+				elif fieldtype == LT_HYPERTEXT:
+					setattr(obj.data, k, hyper_text(v))
+				elif fieldtype == LT_BOOL:
+					if v == '1':
+						setattr(obj.data, k, True)
+					elif v == '0':
+						setattr(obj.data, k, False)
+					else:
+						raise Exception('invalid bool value')
+				elif fieldtype == LT_INT:
+					setattr(obj.data, k, int(v))
 				else:
-					raise Exception('invalid bool value')
-			elif k[0] == LT_INT:
-				setattr(obj.data, k[1:], int(v))
-			else:
-				raise Exception('unrecognized property: ' + k)
+					raise Exception('unrecognized property: ' + k)
 	return obj
 
 class user_data:
@@ -198,7 +209,6 @@ class question_data:
 		self.description = None
 		self.tag_indices = None
 		self.author_index = None
-		self.watched_indices = None
 class question:
 	def __init__(self, idx = None):
 		self.index = idx
