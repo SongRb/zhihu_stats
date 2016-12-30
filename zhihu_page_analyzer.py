@@ -53,8 +53,12 @@ def obj_to_json(obj):
 	return res
 
 def obj_to_document(obj):
+	def conv_to_str(x):
+		if isinstance(x, unicode):
+			return x.encode('utf8')
+		return str(x)
 	res = Document()
-	res.add(StringField('index', str(obj.index), Field.Store.YES))
+	res.add(StringField('index', conv_to_str(obj.index), Field.Store.YES))
 	res.add(StringField('type', obj.__class__.__name__, Field.Store.YES))
 	for k, v in vars(obj.data).items():
 		if v is None:
@@ -128,6 +132,7 @@ def document_to_obj(doc):
 	return obj
 
 class user_data:
+	__slots__ = ('alias', 'description', 'followed_users', 'followed_topics', 'asked_questions')
 	def __init__(self):
 		self.alias = None
 		self.description = None
@@ -135,6 +140,7 @@ class user_data:
 		self.followed_topics = None
 		self.asked_questions = None
 class user:
+	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = user_data()
@@ -152,12 +158,14 @@ class user:
 				self.data.description = ' '.join(list(desccand[0].stripped_strings))
 
 class topic_data:
+	__slots__ = ('text', 'description', 'child_tag_indices', 'watched_indices')
 	def __init__(self):
 		self.text = None
 		self.description = None
 		self.child_tag_indices = None
 		self.watched_indices = None
 class topic:
+	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = topic_data()
@@ -181,6 +189,7 @@ class topic:
 			self.data.description = ' '.join(list(desctag[0].stripped_strings))
 
 class answer_data:
+	__slots__ = ('text', 'author_index', 'likes', 'question_index', 'date')
 	def __init__(self):
 		self.text = None
 		self.author_index = None
@@ -188,6 +197,7 @@ class answer_data:
 		self.question_index = None
 		self.date = None
 class answer:
+	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = answer_data()
@@ -200,16 +210,17 @@ class answer:
 		self.data.likes = int(answerhead.select('[data-votecount]')[0]['data-votecount'])
 		authortag = answerhead.select('.zm-item-answer-author-info')[0].select('.summary-wrapper .author-link-line a')
 		if len(authortag) > 0:
-			self.data.author = authortag[0]['href'].split('/')[-1]
+			self.data.author_index = authortag[0]['href'].split('/')[-1]
 		self.data.date = date_to_int(datetime.datetime.strptime(''.join(tag.select('.zm-item-meta .answer-date-link')[0].string.split()[1:]), '%Y-%m-%d').date())
 
 class question_data:
+	__slots__ = ('title', 'text', 'tag_indices')
 	def __init__(self):
 		self.title = None
-		self.description = None
+		self.text = None
 		self.tag_indices = None
-		self.author_index = None
 class question:
+	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = question_data()
@@ -228,7 +239,7 @@ class question:
 				desc = hyper_text(desc[0].string)
 			else:
 				desc = None
-		self.data.description = desc
+		self.data.text = desc
 		self.data.tag_indices = topic.parse_for_indices(soup.select('.zm-tag-editor')[0])
 		return int(soup.select('#zh-question-detail')[0]['data-resourceid'])
 
@@ -237,6 +248,7 @@ ZH_CT_ANSWER = 1
 ZH_CT_ARTICLE = 2
 
 class comment_data:
+	__slots__ = ('text', 'target', 'target_type', 'is_response', 'response_to_index', 'author_index', 'likes', 'date')
 	def __init__(self):
 		self.text = None
 		self.target = None
@@ -247,6 +259,7 @@ class comment_data:
 		self.likes = None
 		self.date = None
 class comment:
+	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = comment_data()
@@ -269,13 +282,15 @@ class comment:
 		self.data.date = date_to_int(datetime.datetime.strptime(tag.select('.zm-comment-ft .date')[0].string, '%Y-%m-%d').date())
 
 class article_data:
+	__slots__ = ('title', 'tag_indices', 'text', 'likes', 'date')
 	def __init__(self):
 		self.title = None
 		self.tag_indices = None
-		self.contents = None
+		self.text = None
 		self.likes = None
 		self.date = None
 class article:
+	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = article_data()

@@ -169,7 +169,7 @@ def crawl_until_stop(session):
 				task_writer.numDocs(),
 				len(crlt.result_tasks),
 				curt.fails,
-				crlt.func.func_name,
+				crlt.func.func_name[14:],
 				crlt.prm_id,
 				crlt.prm_start,
 				crlt.prm_pagesize,
@@ -178,7 +178,6 @@ def crawl_until_stop(session):
 			if _stop:
 				break
 			time.sleep(1)
-		task_writer.commit()
 		task_writer.close()
 	info_logger.write('stopped\n')
 	_stopped = True
