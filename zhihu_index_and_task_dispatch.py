@@ -4,8 +4,8 @@ from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.index import DirectoryReader
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause
-from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig
+from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause, TermQuery
+from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig, Term
 from org.apache.lucene.util import Version
 import zhihu_client_api as zh_clnapi
 import zhihu_page_analyzer as zh_pganlz
@@ -45,7 +45,7 @@ def create_searcher(directory = INDEXED_FOLDER):
 def create_query(qdict, analyzer):
 	q = BooleanQuery()
 	for k, v in qdict.items():
-		q.add(QueryParser(k, analyzer).parse(v), BooleanClause.Occur.MUST)
+		q.add(TermQuery(Term(k, v)), BooleanClause.Occur.MUST)
 	return q
 def create_query_for_object(objid, objtype):
 	return create_query({'index': str(objid), 'type': objtype.__name__}, WhitespaceAnalyzer())

@@ -176,11 +176,11 @@ def crawl_until_stop(session):
 				crlt.prm_extra
 			))
 			if _stop:
-				info_logger.write('stop request detected\n')
 				break
 			time.sleep(1)
 		task_writer.commit()
 		task_writer.close()
+	info_logger.write('stopped\n')
 	_stopped = True
 
 def main():
@@ -214,9 +214,7 @@ def main():
 				while not _stopped:
 					pass
 				break
-
-		print 'successfully stopped, press enter to exit'
-		raw_input()
+		print 'stopped'
 
 if __name__ == '__main__':
 	main()

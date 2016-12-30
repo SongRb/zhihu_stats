@@ -22,7 +22,7 @@ class doc_object:
 def main():
 	_vm = lucene.initVM(vmargs = ['-Djava.awt.headless=true'])
 
-	searcher = IndexSearcher(DirectoryReader.open(SimpleFSDirectory(File(INDEXED_FOLDER))))
+	searcher = IndexSearcher(DirectoryReader.open(SimpleFSDirectory(File(TASK_FOLDER))))
 	analyzer = WhitespaceAnalyzer()
 	query = MatchAllDocsQuery()
 	with open('res.txt', 'w') as fout:
