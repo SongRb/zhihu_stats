@@ -5,7 +5,7 @@ from org.apache.lucene.document import Document, Field, FieldType, StringField, 
 from org.apache.lucene.index import DirectoryReader, FieldInfo, IndexWriter, IndexWriterConfig, Term
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import MatchAllDocsQuery, IndexSearcher, Sort, SortField, BooleanQuery, BooleanClause
+from org.apache.lucene.search import MatchAllDocsQuery, IndexSearcher, Sort, SortField, BooleanQuery, BooleanClause, TermQuery
 from org.apache.lucene.util import Version
 from zhihu_settings import *
 from zhihu_common import *
@@ -50,7 +50,10 @@ class task:
 		doc = Document()
 		doc.add(StringField('func_name', self.func_name, Field.Store.YES))
 		doc.add(StringField('id_isint', str(bool_to_int(isinstance(self.p_id, (int, long)))), Field.Store.YES))
-		doc.add(StringField('id', str(self.p_id), Field.Store.YES))
+		if isinstance(self.p_id, unicode):
+			doc.add(StringField('id', self.p_id.encode('utf8'), Field.Store.YES))
+		else:
+			doc.add(StringField('id', str(self.p_id), Field.Store.YES))
 		doc.add(StringField('start_isint', str(bool_to_int(isinstance(self.p_start, (int, long)))), Field.Store.YES))
 		doc.add(StringField('start', str(self.p_start), Field.Store.YES))
 		doc.add(StringField('pagesize', str(self.p_pagesize), Field.Store.YES))
@@ -103,6 +106,31 @@ _vm = None
 _stop = False
 _stopped = False
 
+class crawl_strategy:
+	def __init__(self):
+		self.types = (
+			'question_data',
+			'user_data',
+			'topic_data',
+			'article_data',
+			'answers',
+			'user_followed',
+			'user_asked',
+			'question_comments',
+			'answer_comments',
+			'user_articles',
+			'article_comments',
+			'topic_children_indices',
+			'user_watched_topics'
+		)
+		self.curtype = 0
+
+	def process_query(self, q):
+		q.add(TermQuery(Term('func_name', self.types[self.curtype])), BooleanClause.Occur.MUST)
+		self.curtype += 1
+		if self.curtype == len(self.types):
+			self.curtype = 0
+
 def crawl_until_stop(session):
 	global _vm, _stop, _stopped
 
@@ -112,16 +140,16 @@ def crawl_until_stop(session):
 
 	info_logger = external_console_logger('/tmp/zh_c_info')
 	error_logger = external_console_logger('/tmp/zh_c_err')
-	# default_sorter = Sort(SortField('finish_time', SortField.Type.INT))
-	default_query = BooleanQuery()
-	default_query.add(QueryParser('finish_time', WhitespaceAnalyzer()).parse('0'), BooleanClause.Occur.MUST)
+	strategy = crawl_strategy()
 
 	errcount = 0
 
 	while not _stop:
-		info_logger.write('acquiring new tasks... ')
+		info_logger.write('  acquiring new tasks... ')
 		task_reader = zh_iatd.create_searcher(TASK_FOLDER)
-		# searchres = task_reader.searcher.search(default_query, 100, default_sorter)
+		default_query = BooleanQuery()
+		default_query.add(TermQuery(Term('finish_time', '0')), BooleanClause.Occur.MUST)
+		strategy.process_query(default_query)
 		idstart = task_reader.reader.numDocs()
 		searchres = task_reader.searcher.search(default_query, 100)
 		resdocs = [task_reader.searcher.doc(x.doc) for x in searchres.scoreDocs]

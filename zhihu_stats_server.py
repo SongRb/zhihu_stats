@@ -1,4 +1,4 @@
-import lucene, web, os, json
+import lucene, web, os, json, jieba
 from java.io import File
 from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.index import DirectoryReader, Term
@@ -34,44 +34,63 @@ class SS_search:
 				res.add(TermQuery(Term(field, i)), BooleanClause.Occur.SHOULD)
 			return res
 
+		def get_query_result(sarc, dct):
+			PAGE_SIZE = 10
+			PAGE_JUMP = 10
+
+			query = BooleanQuery()
+			page = 0
+			sort_lists = []
+			for k, v in user_data.items():
+				if k in ('index', 'type', 'tag_indices', 'author_index'):
+					query.add(build_anyterm_query(k, user_data[k]), BooleanClause.Occur.MUST)
+				elif k in ('text', 'contents', 'title', 'description', 'alias'):
+					query.add(build_text_query(k + zh_pganlz.LTPF_FOR_QUERY, user_data[k]), BooleanClause.Occur.MUST)
+				elif k == 'raw':
+					query.add(QueryParser('index', WhitespaceAnalyzer()).parse(user_data[k]), BooleanClause.Occur.MUST)
+				elif k == 'page':
+					page = int(user_data[k])
+				elif k == 'sort':
+					for x in user_data['sort']:
+						sort_type = SortField.Type.STRING
+						if 'type' in x.keys():
+							if x['type'] == 'int':
+								sort_type = SortField.Type.INT
+						reverse = False
+						if 'reverse' in x.keys():
+							reverse = x['reverse']
+						sort_lists.append(SortField(x['key'], sort_type, reverse))
+			# TODO switch pages
+			ressrt = Sort(*sort_lists)
+			resdocs = sarc.searcher.search(query, PAGE_SIZE, ressrt)
+			if page > 0:
+				if resdocs.totalHits > page * PAGE_SIZE:
+					page -= 1
+					while page > PAGE_JUMP:
+						resdocs = sarc.searcher.searchAfter(resdocs.scoreDocs[-1], query, PAGE_SIZE * PAGE_JUMP, ressrt)
+						page -= PAGE_JUMP
+					if page > 0:
+						resdocs = sarc.searcher.searchAfter(resdocs.scoreDocs[-1], query, PAGE_SIZE * page, ressrt)
+					resdocs = sarc.searcher.searchAfter(resdocs.scoreDocs[-1], query, PAGE_SIZE, ressrt)
+				else:
+					sarc.searcher.scoreDocs = []
+			reslst = []
+			for x in resdocs.scoreDocs:
+				reslst.append(zh_pganlz.obj_to_json(zh_pganlz.document_to_obj(sarc.searcher.doc(x.doc))))
+			return {'total': resdocs.totalHits, 'data': reslst}
+
 		global _vm
 
 		_vm.attachCurrentThread()
-
 		user_data = web.input()
-
 		searcher = zh_iatd.create_searcher()
-		query = BooleanQuery()
-		# TODO querying with inexistant term gives garbage results
-		return_doc_size = 10
-		sort_lists = []
-		for k, v in user_data.items():
-			if k in ('index', 'type', 'tag_indices', 'author_index'):
-				query.add(build_anyterm_query(k, user_data[k]), BooleanClause.Occur.MUST)
-			elif k in ('text', 'contents', 'title', 'description', 'alias'):
-				query.add(build_text_query(k + zh_pganlz.LTPF_FOR_QUERY, user_data[k]), BooleanClause.Occur.MUST)
-			elif k == 'raw':
-				query.add(QueryParser('index', WhitespaceAnalyzer()).parse(user_data[k]), BooleanClause.Occur.MUST)
-			elif k == 'pagelimit':
-				return_doc_size = int(user_data[k])
-			elif k == 'sort':
-				for x in user_data['sort']:
-					sort_type = SortField.Type.STRING
-					if 'type' in x.keys():
-						if x['type'] == 'int':
-							sort_type = SortField.Type.INT
-					reverse = False
-					if 'reverse' in x.keys():
-						reverse = x['reverse']
-					sort_lists.append(SortField(x['key'], sort_type, reverse))
-		if len(sort_lists) > 0:
-			res = searcher.searcher.search(query, return_doc_size, Sort(*sort_lists))
+		if 'querys' in user_data:
+			reslst = []
+			for x in user_data['querys']:
+				reslst.append(get_query_result(searcher, x))
+			return json.dumps({'results': reslst})
 		else:
-			res = searcher.searcher.search(query, return_doc_size)
-		reslst = []
-		for x in res.scoreDocs:
-			reslst.append(zh_pganlz.obj_to_json(zh_pganlz.document_to_obj(searcher.searcher.doc(x.doc))))
-		return json.dumps({'total': res.totalHits, 'data': reslst})
+			return json.dumps(get_query_result(searcher, user_data))
 
 def generate_url_list():
 	res = []
