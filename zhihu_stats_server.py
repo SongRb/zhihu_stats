@@ -1,17 +1,13 @@
-import lucene, web, os, json, jieba
-from java.io import File
+import lucene, web, json, jieba
 from org.apache.lucene.analysis.core import WhitespaceAnalyzer
 from org.apache.lucene.index import DirectoryReader, Term
 from org.apache.lucene.queryparser.classic import QueryParser
 from org.apache.lucene.store import SimpleFSDirectory
 from org.apache.lucene.search import IndexSearcher, BooleanQuery, TermQuery, BooleanClause, Sort, SortField
-from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig
 from org.apache.lucene.document import Field
-from org.apache.lucene.util import Version
 import zhihu_page_analyzer as zh_pganlz
 import zhihu_index_and_task_dispatch as zh_iatd
 from zhihu_common import *
-from zhihu_settings import *
 
 _SERVER_PREFIX = 'SS'
 _SERVER_ANY_PREFIX = 'SA'
@@ -22,10 +18,10 @@ _vm = None
 
 class SS_:
 	def GET(self):
-		return 'well, this is embarrassing'
+		return renderer.home()
 
 class SS_search:
-	def GET(self):
+	def POST(self):
 		def build_text_query(k, v):
 			return QueryParser(k, WhitespaceAnalyzer()).parse(' '.join(jieba.lcut(v)))
 		def build_anyterm_query(field, strv):
@@ -72,7 +68,7 @@ class SS_search:
 						resdocs = sarc.searcher.searchAfter(resdocs.scoreDocs[-1], query, PAGE_SIZE * page, ressrt)
 					resdocs = sarc.searcher.searchAfter(resdocs.scoreDocs[-1], query, PAGE_SIZE, ressrt)
 				else:
-					sarc.searcher.scoreDocs = []！
+					sarc.searcher.scoreDocs = []
 			reslst = []
 			for x in resdocs.scoreDocs:
 				reslst.append(zh_pganlz.obj_to_json(zh_pganlz.document_to_obj(sarc.searcher.doc(x.doc))))
@@ -82,13 +78,20 @@ class SS_search:
 
 		_vm.attachCurrentThread()
 		user_data = web.input()
+		print user_data
+		user_data = json.loads(user_data['data'])
+		print user_data
 		searcher = zh_iatd.create_searcher()
+		print 'querys' in user_data
 		if 'querys' in user_data:
 			reslst = []
 			for x in user_data['querys']:
 				reslst.append(get_query_result(searcher, x))
+			print len(reslst)
+			print json.dumps({'results': reslst})
 			return json.dumps({'results': reslst})
 		else:
+			print get_query_result(searcher, user_data)
 			return json.dumps(get_query_result(searcher, user_data))
 
 def generate_url_list():
