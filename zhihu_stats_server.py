@@ -60,7 +60,6 @@ class SS_search:
 						if 'reverse' in x.keys():
 							reverse = x['reverse']
 						sort_lists.append(SortField(x['key'], sort_type, reverse))
-			# TODO switch pages
 			ressrt = Sort(*sort_lists)
 			resdocs = sarc.searcher.search(query, PAGE_SIZE, ressrt)
 			if page > 0:
