@@ -22,7 +22,7 @@ _vm = None
 
 class SS_:
 	def GET(self):
-		return 'well, this is embarrassing'
+		return renderer.home()
 
 class SS_search:
 	def GET(self):
@@ -83,12 +83,19 @@ class SS_search:
 		_vm.attachCurrentThread()
 		user_data = web.input()
 		searcher = zh_iatd.create_searcher()
+		
+		print user_data
+		print 'querys' in user_data
 		if 'querys' in user_data:
 			reslst = []
 			for x in user_data['querys']:
 				reslst.append(get_query_result(searcher, x))
+			print reslst
+			for i in reslst:
+				print i
 			return json.dumps({'results': reslst})
 		else:
+			print get_query_result(searcher, user_data)
 			return json.dumps(get_query_result(searcher, user_data))
 
 def generate_url_list():
