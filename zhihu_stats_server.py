@@ -41,17 +41,17 @@ class SS_search:
 			query = BooleanQuery()
 			page = 0
 			sort_lists = []
-			for k, v in user_data.items():
+			for k, v in dct.items():
 				if k in ('index', 'type', 'tag_indices', 'author_index'):
-					query.add(build_anyterm_query(k, user_data[k]), BooleanClause.Occur.MUST)
+					query.add(build_anyterm_query(k, dct[k]), BooleanClause.Occur.MUST)
 				elif k in ('text', 'contents', 'title', 'description', 'alias'):
-					query.add(build_text_query(k + zh_pganlz.LTPF_FOR_QUERY, user_data[k]), BooleanClause.Occur.MUST)
+					query.add(build_text_query(k + zh_pganlz.LTPF_FOR_QUERY, dct[k]), BooleanClause.Occur.MUST)
 				elif k == 'raw':
-					query.add(QueryParser('index', WhitespaceAnalyzer()).parse(user_data[k]), BooleanClause.Occur.MUST)
+					query.add(QueryParser('index', WhitespaceAnalyzer()).parse(dct[k]), BooleanClause.Occur.MUST)
 				elif k == 'page':
-					page = int(user_data[k])
+					page = int(dct[k])
 				elif k == 'sort':
-					for x in user_data['sort']:
+					for x in dct['sort']:
 						sort_type = SortField.Type.STRING
 						if 'type' in x.keys():
 							if x['type'] == 'int':
@@ -73,7 +73,7 @@ class SS_search:
 						resdocs = sarc.searcher.searchAfter(resdocs.scoreDocs[-1], query, PAGE_SIZE * page, ressrt)
 					resdocs = sarc.searcher.searchAfter(resdocs.scoreDocs[-1], query, PAGE_SIZE, ressrt)
 				else:
-					sarc.searcher.scoreDocs = []
+					sarc.searcher.scoreDocs = []！
 			reslst = []
 			for x in resdocs.scoreDocs:
 				reslst.append(zh_pganlz.obj_to_json(zh_pganlz.document_to_obj(sarc.searcher.doc(x.doc))))
