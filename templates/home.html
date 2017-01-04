@@ -42,11 +42,15 @@
 
         function askForResult() {
             var content = document.getElementById('content').value;
-            var pagelimit = document.getElementById('pagelimit').value;
+//            var pagelimit = document.getElementById('pagelimit').value;
 
-            var para = {querys: [{title: content}, {alias: content}]};
+            var para = {'querys': [{'contents': content}]};
             jQuery.ajax({
-                url: '/search', data: para, type: 'GET', dataType: 'json', success: function (jsonObj) {
+                url: '/search',
+                data: {data: JSON.stringify(para)},
+                type: 'POST',
+                dataType: 'json',
+                success: function (jsonObj) {
                     writeResult(jsonObj);
                 }
             })
@@ -55,42 +59,50 @@
         function writeResult(jsonObj) {
             jQuery('.search-result').empty();
             jQuery('.suggest-right').empty();
-            for (i = 0; i < jsonObj.data.length; i++) {
-                var dataObj = jsonObj.data[i];
-                var resultSection;
-                if (dataObj.type == 'article') {
-                    resultSection = setUpResultSection('文章 ', dataObj.title, dataObj.text, dataObj.likes, i);
-                    jQuery('#article-result').append(resultSection);
+            for (i = 0; i < jsonObj.results.length; i++) {
+                var dataList = jsonObj.results[i].data;
+                for (j = 0; j < dataList.length; j++) {
+                    setUpVariousResultSection(dataList[j], j);
                 }
-                else if (dataObj.type == 'question') {
-                    resultSection = setUpResultSection('问题 ', dataObj.title, dataObj.text, 0, i);
-                    jQuery('#question-result').append(resultSection);
-                }
-                else if (dataObj.type == 'answer') {
-                    resultSection = setUpResultSection('答案 ', dataObj.question_index, dataObj.text, dataObj.likes, i);
-                    jQuery('#answer-result').append(resultSection);
-                }
-                else if (dataObj.type == 'user') {
-                    resultSection = setUpResultSection('用户 ', dataObj.alias, dataObj.text, dataObj.description, i);
-                    jQuery('#user-result').append(resultSection);
-                }
-                else if (dataObj.type == 'topic') {
-                    resultSection = setUpResultSection('话题 ', dataObj.text, 000000, 000000, i);
-                    jQuery('#topic-result').append(resultSection);
-                }
-                jQuery('#total-result').append(resultSection.clone());
             }
             var suggestSection = setUpSuggestRightSection('vzch', '一个老司机', '/static/img/home_background_1.png', '轮带逛');
             jQuery('#total-suggest').append(suggestSection);
         }
-        function setUpResultSection(type, title, text, likes, date) {
+
+        function setUpVariousResultSection(dataObj, i) {
+            var resultSection;
+            if (dataObj.type == 'article') {
+                resultSection = setUpResultSection('文章 ', dataObj.title, dataObj.contents, dataObj.likes, i);
+                jQuery('#article-result').append(resultSection);
+            }
+            else if (dataObj.type == 'question') {
+                resultSection = setUpResultSection('问题 ', dataObj.title, dataObj.contents, 0, i);
+                jQuery('#question-result').append(resultSection);
+            }
+            else if (dataObj.type == 'answer') {
+                resultSection = setUpResultSection('答案 ', dataObj.question_index, dataObj.contents, dataObj.likes, i);
+                jQuery('#answer-result').append(resultSection);
+            }
+            else if (dataObj.type == 'user') {
+                resultSection = setUpResultSection('用户 ', dataObj.alias, dataObj.contents, dataObj.description, i);
+                jQuery('#user-result').append(resultSection);
+            }
+            else if (dataObj.type == 'topic') {
+                resultSection = setUpResultSection('话题 ', dataObj.contents, 000000, 000000, i);
+                jQuery('#topic-result').append(resultSection);
+            }
+            jQuery('#total-result').append(resultSection.clone());
+        }
+
+
+        function setUpResultSection(type, title, content, likes, date) {
             return jQuery('<section class="mdl-grid mdl-grid--no-spacing mdl-shadow--2dp section--left " ' +
                 'data-transition="slide" style="">' +
                 '<div class="mdl-card mdl-cell mdl-cell--12-col">' +
                 '<div class="mdl-card__supporting-text"><h4>' +
-                type + ':' + title +
+                type + String(date) + +':' + title +
                 '</h4>' +
-                text + '<br>' + likes + ' likes' + '<br>' + date +
+                content + '<br>' + likes + ' likes' + '<br>' +
                 '</div><div class="mdl-card__actions">' +
                 '<a href="" target ="_blank" class="mdl-button" >Show more</a></div></div>' +
                 '<button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" id="" onclick="getUrl(this)">' +
@@ -121,12 +133,12 @@
         <div class="mdl-layout__header-row search-header-row">
             <div class="mdl-textfield mdl-js-textfield search-field">
                 <div>
-                    <div>
-                        <label><i class="material-icons">search</i></label>
-                    </div>
+                    <!--<div>-->
+                    <!--<label><i class="material-icons">search</i></label>-->
+                    <!--</div>-->
                     <input class="mdl-textfield__input search-field-input" type="text" id="content"
                            onkeydown="if(event.keyCode==13){askForResult()}">
-                    <label class="mdl-textfield__label search-field-label" for="content">Text...</label>
+                    <!--<label class="mdl-textfield__label search-field-label" for="content">Text...</label>-->
                 </div>
             </div>
 
