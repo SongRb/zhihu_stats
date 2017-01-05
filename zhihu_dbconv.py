@@ -10,6 +10,7 @@ from org.apache.lucene.util import Version
 from zhihu_settings import *
 from zhihu_common import *
 from zhihu_page_analyzer import *
+import zhihu_page_analyzer as zh_pganlz
 import zhihu_index_and_task_dispatch as zh_iatd
 import zhihu_client_api as zh_clnapi
 
@@ -89,9 +90,12 @@ def main():
 	while len(res.scoreDocs) > 0:
 		for x in res.scoreDocs:
 			realdoc = db_reader.searcher.doc(x.doc)
-			obj = document_to_obj_new(realdoc)
-			newdoc = obj_to_document_new(obj)
-			newobj = document_to_obj_new(newdoc)
+			obj = document_to_obj(realdoc)
+			if isinstance(obj, zh_pganlz.article):
+				if 'contents' in vars(obj.data).keys():
+					obj.data.text = obj.data.contents
+					del obj.data.contents
+			newdoc = obj_to_document(obj)
 			db_writer.addDocument(newdoc)
 			tot += 1
 			sys.stdout.write('\r{0}'.format(tot))

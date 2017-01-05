@@ -69,12 +69,6 @@ class zhihu_session:
 		)).read())
 
 
-	def _parse_people_list(lst):
-		result = []
-		for x in lst:
-			result.append(lst['url_token'])
-		return result
-
 	def _get_userdata_api(self, section, user, start, pagesize):
 		return json.loads(self.opener.open(urllib2.Request(
 			url = 'https://www.zhihu.com/api/v4/members/{0}/{1}?limit={2}&offset={3}'.format(user, section, pagesize, start)

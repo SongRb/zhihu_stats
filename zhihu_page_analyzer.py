@@ -73,11 +73,11 @@ def obj_to_document(obj):
 				fieldtype = LT_LIST
 		elif isinstance(v, str) or isinstance(v, unicode):
 			res.add(Field(k, v, Field.Store.YES, Field.Index.NO))
-			res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut(v)), Field.Store.NO))
+			res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut_for_search(v)), Field.Store.NO))
 			fieldtype = LT_STRING
 		elif isinstance(v, hyper_text):
 			res.add(Field(k, v.raw, Field.Store.YES, Field.Index.NO))
-			res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut(v.text)), Field.Store.NO))
+			res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut_for_search(v.text)), Field.Store.NO))
 			fieldtype = LT_HYPERTEXT
 		elif isinstance(v, bool):
 			if v:
@@ -132,7 +132,6 @@ def document_to_obj(doc):
 	return obj
 
 class user_data:
-	__slots__ = ('alias', 'description', 'followed_users', 'followed_topics', 'asked_questions')
 	def __init__(self):
 		self.alias = None
 		self.description = None
@@ -140,7 +139,6 @@ class user_data:
 		self.followed_topics = None
 		self.asked_questions = None
 class user:
-	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = user_data()
@@ -158,14 +156,12 @@ class user:
 				self.data.description = ' '.join(list(desccand[0].stripped_strings))
 
 class topic_data:
-	__slots__ = ('text', 'description', 'child_tag_indices', 'watched_indices')
 	def __init__(self):
 		self.text = None
 		self.description = None
 		self.child_tag_indices = None
 		self.watched_indices = None
 class topic:
-	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = topic_data()
@@ -189,7 +185,6 @@ class topic:
 			self.data.description = ' '.join(list(desctag[0].stripped_strings))
 
 class answer_data:
-	__slots__ = ('text', 'author_index', 'likes', 'question_index', 'date')
 	def __init__(self):
 		self.text = None
 		self.author_index = None
@@ -197,7 +192,6 @@ class answer_data:
 		self.question_index = None
 		self.date = None
 class answer:
-	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = answer_data()
@@ -214,13 +208,11 @@ class answer:
 		self.data.date = date_to_int(datetime.datetime.strptime(''.join(tag.select('.zm-item-meta .answer-date-link')[0].string.split()[1:]), '%Y-%m-%d').date())
 
 class question_data:
-	__slots__ = ('title', 'text', 'tag_indices')
 	def __init__(self):
 		self.title = None
 		self.text = None
 		self.tag_indices = None
 class question:
-	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = question_data()
@@ -248,7 +240,6 @@ ZH_CT_ANSWER = 1
 ZH_CT_ARTICLE = 2
 
 class comment_data:
-	__slots__ = ('text', 'target', 'target_type', 'is_response', 'response_to_index', 'author_index', 'likes', 'date')
 	def __init__(self):
 		self.text = None
 		self.target = None
@@ -259,7 +250,6 @@ class comment_data:
 		self.likes = None
 		self.date = None
 class comment:
-	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = comment_data()
@@ -282,7 +272,6 @@ class comment:
 		self.data.date = date_to_int(datetime.datetime.strptime(tag.select('.zm-comment-ft .date')[0].string, '%Y-%m-%d').date())
 
 class article_data:
-	__slots__ = ('title', 'tag_indices', 'text', 'likes', 'date')
 	def __init__(self):
 		self.title = None
 		self.tag_indices = None
@@ -290,7 +279,6 @@ class article_data:
 		self.likes = None
 		self.date = None
 class article:
-	__slots__ = ('index', 'data')
 	def __init__(self, idx = None):
 		self.index = idx
 		self.data = article_data()

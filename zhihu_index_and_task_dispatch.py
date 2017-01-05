@@ -111,7 +111,7 @@ def get_and_parse_article_data(session, tsk):
 		tsk.result_rep_obj.data.title = artjson['title']
 		for x in artjson['topics']:
 			tsk.result_rep_obj.data.tag_indices.append(x['id'])
-		tsk.result_rep_obj.data.contents = zh_pganlz.hyper_text(artjson['content'])
+		tsk.result_rep_obj.data.text = zh_pganlz.hyper_text(artjson['content'])
 		tsk.result_rep_obj.data.likes = artjson['likesCount']
 		tsk.result_rep_obj.data.date = zh_pganlz.date_to_int(zh_pganlz.parse_javascript_date(artjson['publishedTime']))
 		# generate subtasks
