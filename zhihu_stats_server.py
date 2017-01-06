@@ -7,6 +7,7 @@ from org.apache.lucene.search import IndexSearcher, BooleanQuery, TermQuery, Boo
 from org.apache.lucene.document import Field
 import zhihu_page_analyzer as zh_pganlz
 import zhihu_index_and_task_dispatch as zh_iatd
+import zhihu_client_api as zh_clnapi
 from zhihu_common import *
 
 _SERVER_PREFIX = 'SS'
@@ -15,6 +16,7 @@ _SERVER_ANY_PREFIX = 'SA'
 renderer = web.template.render('./templates/')
 
 _vm = None
+_session = zh_clnapi.zhihu_session()
 
 class SS_:
 	def GET(self):
@@ -44,6 +46,20 @@ class SS_search:
 					query.add(build_text_query(k + zh_pganlz.LTPF_FOR_QUERY, dct[k]), BooleanClause.Occur.MUST)
 				elif k == 'raw':
 					query.add(QueryParser('index', WhitespaceAnalyzer()).parse(dct[k]), BooleanClause.Occur.MUST)
+				elif k == 'enhraw':
+					x = 0
+					reslst = []
+					for entry in v:
+						if x == 2:
+							reslst.append(entry.encode('utf8'))
+							x = 0
+						else:
+							if x == 0:
+								lastdoc = entry.encode('utf8')
+							else:
+								reslst += [lastdoc + x.encode('utf8') for x in jieba.cut(entry)]
+							x += 1
+					query.add(QueryParser('index', WhitespaceAnalyzer()).parse(' '.join(reslst)), BooleanClause.Occur.MUST)
 				elif k == 'page':
 					page = int(dct[k])
 				elif k == 'sort':
@@ -94,6 +110,19 @@ class SS_search:
 			print get_query_result(searcher, user_data)
 			return json.dumps(get_query_result(searcher, user_data))
 
+class SS_idb:
+	def POST(self):
+		global _vm
+
+		_vm.attachCurrentThread()
+		user_data = web.input()
+		reslst = []
+		for x in json.loads(user_data['data'])['data']:
+			ctk = crawler_task(vars(zh_iatd)['get_and_parse_' + x['func']], x['id'])
+			ctk.func(_session, ctk)
+			reslst.append(zh_pganlz.obj_to_json(ctk.result_rep_obj))
+		return json.dumps({'results': reslst})
+
 def generate_url_list():
 	res = []
 	for k in globals().keys():
@@ -106,8 +135,22 @@ def generate_url_list():
 	return res
 
 def main():
-	global _vm
+	global _vm, _session
+
 	_vm = lucene.initVM(vmargs = ['-Djava.awt.headless=true'])
+
+	if os.path.exists('login_info'):
+		with open('login_info', 'r') as fin:
+			email = fin.readline()
+			password = fin.readline()
+		print 'Email:', email
+		print 'Password: ', '*' * len(password)
+	else:
+		email = raw_input('Email: ')
+		password = raw_input('Password: ')
+	session = zh_clnapi.zhihu_session()
+	session.login_email(email, password)
+
 	web.application(generate_url_list(), globals()).run()
 
 if __name__ == '__main__':

@@ -320,7 +320,7 @@ def print_object(obj, depth = 0, out = sys.stdout):
 		try:
 			props = vars(obj)
 		except:
-			out.write(' {0}\n'.format(str(obj)))
+			out.write(' {0}\n'.format(unicode(obj).encode('utf8')))
 		else:
 			out.write(' {\n')
 			for k, v in props.items():

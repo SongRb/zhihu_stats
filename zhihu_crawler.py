@@ -193,12 +193,16 @@ def crawl_until_stop(session):
 					newt.docid = idstart
 					idstart += 1
 					task_writer.addDocument(newt.to_document())
+			if isinstance(crlt.prm_id, unicode):
+				prids = crlt.prm_id.encode('utf8')
+			else:
+				prids = str(crlt.prm_id)
 			info_logger.write(' ~{0}(+{1}) -{2} {3}({4}, {5}, {6}, {7})\n'.format(
 				task_writer.numDocs(),
 				len(crlt.result_tasks),
 				curt.fails,
 				crlt.func.func_name[14:],
-				crlt.prm_id,
+				prids,
 				crlt.prm_start,
 				crlt.prm_pagesize,
 				crlt.prm_extra

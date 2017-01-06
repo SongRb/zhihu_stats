@@ -86,7 +86,7 @@ def get_and_parse_user_data(session, tsk):
 	with create_searcher() as searcher:
 		tsk.result_rep_obj, tsk.result_query = query_object(searcher, tsk.prm_id, zh_pganlz.user)
 	tsk.result_rep_obj.parse_personal_info_page(session.opener.open(urllib2.Request(
-		url = 'https://www.zhihu.com/people/{0}'.format(tsk.prm_id)
+		url = 'https://www.zhihu.com/people/{0}'.format(tsk.prm_id.encode('utf8'))
 	)).read())
 	# generate subtasks
 	tsk.result_tasks.append(crawler_task(get_and_parse_user_followed, tsk.result_rep_obj.index, 0, 10))
