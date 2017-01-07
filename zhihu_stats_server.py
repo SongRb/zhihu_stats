@@ -1,14 +1,16 @@
-import lucene, web, json, jieba
+import jieba
+import json
+import lucene
+import os
+import web
 from org.apache.lucene.analysis.core import WhitespaceAnalyzer
-from org.apache.lucene.index import DirectoryReader, Term
+from org.apache.lucene.index import Term
 from org.apache.lucene.queryparser.classic import QueryParser
-from org.apache.lucene.store import SimpleFSDirectory
-from org.apache.lucene.search import IndexSearcher, BooleanQuery, TermQuery, BooleanClause, Sort, SortField
-from org.apache.lucene.document import Field
-import zhihu_page_analyzer as zh_pganlz
-import zhihu_index_and_task_dispatch as zh_iatd
+from org.apache.lucene.search import BooleanQuery, TermQuery, BooleanClause, Sort, SortField
+
 import zhihu_client_api as zh_clnapi
-from zhihu_common import *
+import zhihu_index_and_task_dispatch as zh_iatd
+import zhihu_page_analyzer as zh_pganlz
 
 _SERVER_PREFIX = 'SS'
 _SERVER_ANY_PREFIX = 'SA'
