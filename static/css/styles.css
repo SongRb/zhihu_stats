@@ -126,7 +126,12 @@ html, body {
     width: 800px;
     max-width: 800px;
     margin-left: 20px;
-    margin-bottom: 20px
+    margin-bottom: 20px;
+    position: relative;
+    -webkit-animation-name: fadeIn; /*动画名称*/
+    -webkit-animation-duration: 1s; /*动画持续时间*/
+    -webkit-animation-iteration-count: 1; /*动画次数*/
+    -webkit-animation-delay: 0s; /*延迟时间*/
 }
 
 .mdl-zhihu-search #features section.section--left {
@@ -255,11 +260,19 @@ html, body {
     width: 320px;
     height: 320px;
     margin-right: 20px;
+    -webkit-animation-name: fadeIn; /*动画名称*/
+    -webkit-animation-duration: 1s; /*动画持续时间*/
+    -webkit-animation-iteration-count: 1; /*动画次数*/
+    -webkit-animation-delay: 0s; /*延迟时间*/
 }
 
 .demo-card-square > .mdl-card__title {
     color: #fff;
     background: url('/static/img/search_bar_background.jpg') bottom right 15% no-repeat #46B6AC;
+}
+
+.search-header {
+    background: url('/static/img/search_bar_background-2.png');
 }
 
 .search-header-row {
@@ -298,4 +311,37 @@ html, body {
     height: inherit;
     font-size: inherit;
     color: gray;
+}
+
+.search-switch {
+    width: 100px;
+}
+
+/* .search-checkbox:nth-of-type(3)({
+     margin-left: auto;
+    margin-right: auto;
+} */
+
+.search-checkbox:not(:last-of-type) {
+    width: 150px;
+}
+
+.search-checkbox:last-of-type {
+    width: auto;
+}
+
+.search-radio {
+    width: 120px;
+}
+
+@-webkit-keyframes fadeIn {
+    0% {
+        opacity: 0; /*初始状态 透明度为0*/
+    }
+    50% {
+        opacity: 0.5; /*中间状态 透明度为0*/
+    }
+    100% {
+        opacity: 1; /*结尾状态 透明度为1*/
+    }
 }

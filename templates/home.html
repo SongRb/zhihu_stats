@@ -1,11 +1,11 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="https://fonts.lug.ustc.edu.cn/icon?family=Material+Icons">
-    <link rel="stylesheet" href="/static/css/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="/static/css/material.indigo-blue.min.css">
     <script defer src="/static/js/material.min.js"></script>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
+    <meta name="description" content="A front-end support for Zhihu Search.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <title>Home - Hooli Search</title>
 
@@ -16,7 +16,7 @@
     <!-- Add to homescreen for Safari on iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Material Design Lite">
+    <meta name="apple-mobile-web-app-title" content="Hooli Search">
     <link rel="apple-touch-icon-precomposed" href="images/ios-desktop.png">
 
     <!-- Tile icon for Win8 (144x144 + tile color) -->
@@ -24,11 +24,6 @@
     <meta name="msapplication-TileColor" content="#3372DF">
 
     <link rel="shortcut icon" href="/static/img/favicon.ico">
-
-    <!-- SEO: If your mobile URL is different from the desktop URL, add a canonical link to the desktop page https://developers.google.com/webmasters/smartphone-sites/feature-phones -->
-    <!--
-    <link rel="canonical" href="http://www.example.com/">
-    -->
 
     <link rel="stylesheet"
           href="https://fonts.lug.ustc.edu.cn/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
@@ -38,127 +33,79 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="/static/js/material.min.js"></script>
 
-    <script>
-
-        function askForResult() {
-            var content = document.getElementById('content').value;
-//            var pagelimit = document.getElementById('pagelimit').value;
-
-            var para = {'querys': [{'contents': content}]};
-            jQuery.ajax({
-                url: '/search',
-                data: {data: JSON.stringify(para)},
-                type: 'POST',
-                dataType: 'json',
-                success: function (jsonObj) {
-                    writeResult(jsonObj);
-                }
-            })
-        }
-
-        function writeResult(jsonObj) {
-            jQuery('.search-result').empty();
-            jQuery('.suggest-right').empty();
-            for (i = 0; i < jsonObj.results.length; i++) {
-                var dataList = jsonObj.results[i].data;
-                for (j = 0; j < dataList.length; j++) {
-                    setUpVariousResultSection(dataList[j], j);
-                }
-            }
-            var suggestSection = setUpSuggestRightSection('vzch', '一个老司机', '/static/img/home_background_1.png', '轮带逛');
-            jQuery('#total-suggest').append(suggestSection);
-        }
-
-        function setUpVariousResultSection(dataObj, i) {
-            var resultSection;
-            if (dataObj.type == 'article') {
-                resultSection = setUpResultSection('文章 ', dataObj.title, dataObj.contents, dataObj.likes, i);
-                jQuery('#article-result').append(resultSection);
-            }
-            else if (dataObj.type == 'question') {
-                resultSection = setUpResultSection('问题 ', dataObj.title, dataObj.contents, 0, i);
-                jQuery('#question-result').append(resultSection);
-            }
-            else if (dataObj.type == 'answer') {
-                resultSection = setUpResultSection('答案 ', dataObj.question_index, dataObj.contents, dataObj.likes, i);
-                jQuery('#answer-result').append(resultSection);
-            }
-            else if (dataObj.type == 'user') {
-                resultSection = setUpResultSection('用户 ', dataObj.alias, dataObj.contents, dataObj.description, i);
-                jQuery('#user-result').append(resultSection);
-            }
-            else if (dataObj.type == 'topic') {
-                resultSection = setUpResultSection('话题 ', dataObj.contents, 000000, 000000, i);
-                jQuery('#topic-result').append(resultSection);
-            }
-            jQuery('#total-result').append(resultSection.clone());
-        }
-
-
-        function setUpResultSection(type, title, content, likes, date) {
-            return jQuery('<section class="mdl-grid mdl-grid--no-spacing mdl-shadow--2dp section--left " ' +
-                'data-transition="slide" style="">' +
-                '<div class="mdl-card mdl-cell mdl-cell--12-col">' +
-                '<div class="mdl-card__supporting-text"><h4>' +
-                type + String(date) + +':' + title +
-                '</h4>' +
-                content + '<br>' + likes + ' likes' + '<br>' +
-                '</div><div class="mdl-card__actions">' +
-                '<a href="" target ="_blank" class="mdl-button" >Show more</a></div></div>' +
-                '<button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" id="" onclick="getUrl(this)">' +
-                '<i class="material-icons">share</i></button>' +
-                '</section>');
-        }
-
-        function setUpSuggestRightSection(title, description, picture, action) {
-            var sec = jQuery('<div class="demo-card-square mdl-card mdl-shadow--2dp">' +
-                '<div class="mdl-card__title mdl-card--expand"><h2 class="mdl-card__title-text">' +
-                title + '</h2> </div> <div class="mdl-card__supporting-text">' +
-                description + '</div> <div class="mdl-card__actions mdl-card--border">' +
-                '<a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">' + action +
-                '</a></div></div>');
-            sec.css = ({background: 'url(' + picture + ') bottom right 15% no-repeat #46B6AC'});
-            return sec;
-        }
-    </script>
+    <script defer src="/static/js/script.js"></script>
 
     <script src="/static/js/jQuery.js"></script>
 </head>
 <body class="mdl-zhihu-search mdl-color--grey-100 mdl-color-text--grey-700 mdl-base">
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-    <header class="mdl-layout__header mdl-layout__header--scroll">
-        <!--<div class="mdl-layout__header-row">-->
-        <!--<span class="mdl-layout-title">纸糊搜索</span>-->
-        <!--</div>-->
+    <header class="mdl-layout__header mdl-layout__header--scroll search-header">
+
         <div class="mdl-layout__header-row search-header-row">
             <div class="mdl-textfield mdl-js-textfield search-field">
-                <div>
-                    <!--<div>-->
-                    <!--<label><i class="material-icons">search</i></label>-->
-                    <!--</div>-->
-                    <input class="mdl-textfield__input search-field-input" type="text" id="content"
-                           onkeydown="if(event.keyCode==13){askForResult()}">
-                    <!--<label class="mdl-textfield__label search-field-label" for="content">Text...</label>-->
+                <div class="mdl-layout__header-row">
+                    <span class="mdl-layout-title">纸糊搜索</span>
                 </div>
+
+
+            </div>
+        </div>
+        <div class="mdl-layout__header-row search-header-row">
+            <div class="mdl-textfield mdl-js-textfield search-field">
+                <!--<div>-->
+                <!--<label><i class="material-icons">search</i></label>-->
+                <!--</div>-->
+                <input class="mdl-textfield__input search-field-input" type="text" id="content"
+                       onkeydown="if(event.keyCode==13){askForResult()}">
+            </div>
+        </div>
+
+        <div class="mdl-layout__header-row search-header-row">
+            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect search-radio" for="option-1">
+                <input type="radio" id="option-1" class="mdl-radio__button" name="options" value="1" checked>
+                <span class="mdl-radio__label">日期优先</span>
+            </label>
+            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect search-radio" for="option-2">
+                <input type="radio" id="option-2" class="mdl-radio__button" name="options" value="2">
+                <span class="mdl-radio__label">相关度优先</span>
+            </label>
+            <div class="type-select-boxes">
+
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect search-checkbox"
+                       for="checkbox-question">
+                    <input type="checkbox" id="checkbox-question" class="mdl-checkbox__input" checked>
+                    <span class="mdl-checkbox__label">问题</span>
+                </label>
+
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect search-checkbox" for="checkbox-answer">
+                    <input type="checkbox" id="checkbox-answer" class="mdl-checkbox__input" checked>
+                    <span class="mdl-checkbox__label">答案</span>
+                </label>
+
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect search-checkbox" for="checkbox-user">
+                    <input type="checkbox" id="checkbox-user" class="mdl-checkbox__input" checked>
+                    <span class="mdl-checkbox__label">用户</span>
+                </label>
+
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect search-checkbox" for="checkbox-article">
+                    <input type="checkbox" id="checkbox-article" class="mdl-checkbox__input" checked>
+                    <span class="mdl-checkbox__label">文章</span>
+                </label>
+
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect search-checkbox" for="checkbox-topic">
+                    <input type="checkbox" id="checkbox-topic" class="mdl-checkbox__input" checked>
+                    <span class="mdl-checkbox__label">话题</span>
+                </label>
+
             </div>
 
-            <!--<div>-->
-            <!--Pagelimit-->
-            <!--</div>-->
-
-
-            <!--<div>-->
-            <!--<p style="width:300px">-->
-            <!--<input class="mdl-slider mdl-js-slider" type="range" id="pagelimit"-->
-            <!--min="10" max="50" value="25" tabindex="0">-->
-            <!--</p>-->
-            <!--</div>-->
-            <!--<div>-->
-            <!--<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="page">-->
-            <!--<input type="checkbox" id="page" class="mdl-checkbox__input" checked>-->
-            <!--<span class="mdl-checkbox__label">Checkbox</span>-->
-            <!--</label>-->
-            <!--</div>-->
+            <label>
+                <input class="mdl-slider mdl-js-slider" type="range"
+                       min="5" max="100" value="25" tabindex="0" id="pagelimit-slider" oninput="changeValue(this)">
+            </label>
+            <label>
+                <span class="mdl-checkbox__label" id="pagelimit-value">返回25条数据</span>
+            </label>
         </div>
 
         <!-- Tabs -->
