@@ -11,28 +11,31 @@ function askForResult() {
     var content = document.getElementById('content').value;
 
     var para = {querys: [], page: 0};
+    if (!document.getElementById('checkbox-question').checked) {
+        if (document.getElementById('checkbox-question').checked) {
+            para['querys'].push({'type': 'question', 'title': content});
+        }
 
-    if (document.getElementById('checkbox-question').checked) {
-        para['querys'].push({'type': 'question', 'title': content});
+        if (document.getElementById('checkbox-answer').checked) {
+            para['querys'].push({'type': 'answer', 'text': content});
+        }
+
+        if (document.getElementById('checkbox-user').checked) {
+            para['querys'].push({'type': 'user', 'description': content});
+        }
+
+        if (document.getElementById('checkbox-article').checked) {
+            para['querys'].push({'type': 'article', 'text': content});
+        }
+
+        if (document.getElementById('checkbox-topic').checked) {
+            para['querys'].push({'type': 'topic', 'text': content});
+        }
+    }
+    else {
+        para['querys'].push({'raw': content});
     }
 
-    if (document.getElementById('checkbox-answer').checked) {
-        para['querys'].push({'type': 'answer', 'text': content});
-    }
-
-    if (document.getElementById('checkbox-user').checked) {
-        para['querys'].push({'type': 'user', 'description': content});
-    }
-
-    if (document.getElementById('checkbox-article').checked) {
-        para['querys'].push({'type': 'article', 'text': content});
-    }
-
-    if (document.getElementById('checkbox-topic').checked) {
-        para['querys'].push({'type': 'topic', 'text': content});
-    }
-
-    // para['page'] = document.getElementById('pagelimit-slider').value;
     para['page'] = 1;
 
     jQuery.ajax({
@@ -57,7 +60,7 @@ function writeResult(jsonObj) {
         }
     }
     jQuery('img').css('max-width', '600');
-    var suggestSection = setUpSuggestRightSection('vzch', '一个老司机', '/static/img/home_background_1.png', '轮带逛');
+    var suggestSection = setUpSuggestRightSection('vzch', '一个老司机', '/static/img/home_background-1.png', '轮带逛');
     jQuery('#total-suggest').append(suggestSection);
 }
 

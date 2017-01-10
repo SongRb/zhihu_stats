@@ -99,12 +99,16 @@
 
             </div>
 
-            <label>
-                <input class="mdl-slider mdl-js-slider" type="range"
-                       min="5" max="100" value="25" tabindex="0" id="pagelimit-slider" oninput="changeValue(this)">
-            </label>
-            <label>
-                <span class="mdl-checkbox__label" id="pagelimit-value">返回25条数据</span>
+            <!--<label>-->
+            <!--<input class="mdl-slider mdl-js-slider" type="range"-->
+            <!--min="5" max="100" value="25" tabindex="0" id="pagelimit-slider" oninput="changeValue(this)">-->
+            <!--</label>-->
+            <!--<label>-->
+            <!--<span class="mdl-checkbox__label" id="pagelimit-value">返回25条数据</span>-->
+            <!--</label>-->
+            <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="switch-database">
+                <input type="checkbox" id="switch-database" class="mdl-switch__input" checked>
+                <span class="mdl-switch__label">采用数据库指令</span>
             </label>
         </div>
 
@@ -120,6 +124,12 @@
     </header>
     <div class="mdl-layout__drawer">
         <span class="mdl-layout-title">纸糊搜索</span>
+        <nav class="mdl-navigation">
+            <a class="mdl-navigation__link" href="">首页</a>
+            <a class="mdl-navigation__link" href="">使用教程</a>
+            <a class="mdl-navigation__link" href="">设置</a>
+            <a class="mdl-navigation__link" href="">关于我们</a>
+        </nav>
     </div>
 
 
