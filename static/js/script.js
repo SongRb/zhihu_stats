@@ -17,6 +17,34 @@ function askForResult(page) {
 
     var content = document.getElementById('content').value;
 
+    var para = {querys: [], page: 0};
+    if (!document.getElementById('checkbox-question').checked) {
+        if (document.getElementById('checkbox-question').checked) {
+            para['querys'].push({'type': 'question', 'title': content});
+        }
+
+        if (document.getElementById('checkbox-answer').checked) {
+            para['querys'].push({'type': 'answer', 'text': content});
+        }
+
+        if (document.getElementById('checkbox-user').checked) {
+            para['querys'].push({'type': 'user', 'description': content});
+        }
+
+        if (document.getElementById('checkbox-article').checked) {
+            para['querys'].push({'type': 'article', 'text': content});
+        }
+
+        if (document.getElementById('checkbox-topic').checked) {
+            para['querys'].push({'type': 'topic', 'text': content});
+        }
+    }
+    else {
+        para['querys'].push({'raw': content});
+    }
+
+    para['page'] = 1;
+
     var para = {querys: []};
 
     if (!(document.getElementById('switch-database').checked)) {
