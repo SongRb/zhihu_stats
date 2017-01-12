@@ -27,9 +27,13 @@ class zhihu_session:
 				headers = REQUEST_HEADERS
 			))
 			captchawriter.write(openedurl.read())
-		proc = subprocess.Popen(('eog', tmpfile))
-		captcha = raw_input('Captcha: ')
-		proc.kill()
+		try:
+			proc = subprocess.Popen(('eog', tmpfile), stdout = open('/dev/null', 'w'), stderr = open('/dev/null', 'w'))
+			captcha = raw_input('Captcha: ')
+			proc.kill()
+		except:
+			print 'Captcha has been saved to file', tmpfile
+			captcha = raw_input('Captcha: ')
 		login_result = json.loads(self.opener.open(urllib2.Request(
 			url = url,
 			headers = REQUEST_HEADERS,
@@ -133,8 +137,8 @@ class zhihu_session:
 def main():
 	if os.path.exists('login_info'):
 		with open('login_info', 'r') as fin:
-			email = fin.readline()
-			password = fin.readline()
+			email = fin.readline().strip()
+			password = fin.readline().strip()
 		print 'Email:', email
 		print 'Password: ', '*' * len(password)
 	else:

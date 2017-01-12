@@ -1,7 +1,11 @@
-<html lang="en">
+<html>
 <head>
-    <link rel="stylesheet" href="https://fonts.lug.ustc.edu.cn/icon?family=Material+Icons">
-    <link rel="stylesheet" href="/static/css/material.indigo-blue.min.css">
+
+
+    <!--<link type="text/css" rel="stylesheet" href="/static/css/materialize.css"  media="screen,projection"/>-->
+    <link rel="stylesheet" href="/static/css/material.indigo-purple.min.css">
+    <!--<script type="text/javascript" src="/static/js/materialize.js"></script>-->
+
     <script defer src="/static/js/material.min.js"></script>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -28,12 +32,14 @@
     <link rel="stylesheet"
           href="https://fonts.lug.ustc.edu.cn/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
     <link rel="stylesheet" href="https://fonts.lug.ustc.edu.cn/icon?family=Material+Icons">
-    <!--<link rel="stylesheet" href="/static/css/material.deep_purple-pink.min.css">-->
+    <link rel="stylesheet" href="/static/css/material.deep_purple-pink.min.css">
     <link rel="stylesheet" href="/static/css/material-design-search-bar-palette.css">
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="/static/js/material.min.js"></script>
 
     <script defer src="/static/js/script.js"></script>
+
+    <script defer src="/static/js/stat_graphs.js"></script>
 
     <script src="/static/js/jQuery.js"></script>
 </head>
@@ -51,24 +57,34 @@
             </div>
         </div>
         <div class="mdl-layout__header-row search-header-row">
-            <div class="mdl-textfield mdl-js-textfield search-field">
-                <!--<div>-->
-                <!--<label><i class="material-icons">search</i></label>-->
-                <!--</div>-->
+
+
+            <!--</div>-->
+            <div class=" mdl-textfield mdl-js-textfield search-field ">
                 <input class="mdl-textfield__input search-field-input" type="text" id="content"
-                       onkeydown="if(event.keyCode==13){askForResult()}">
+                       onkeydown="if(event.keyCode==13){on_initialize_new_search();}">
             </div>
+
+            <div class="search-button-container">
+                <i class="material-icons icon-button">search</i>
+                <i class="material-icons icon-button" onclick="askForImageResult()">cloud_upload</i>
+            </div>
+            <div class="">
+
+                <!--<label class="search-text-button"><i class="material-icons search-text-icon-button">search</i></label>-->
+                <!--<label class="search-picture-button"><i class="material-icons">cloud_upload</i></label>-->
+                <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect search-switch" for="switch-database">
+                    <input type="checkbox" id="switch-database" class="mdl-switch__input">
+                    <span class="mdl-switch__label">采用数据库指令</span>
+                </label>
+            </div>
+
+
         </div>
 
         <div class="mdl-layout__header-row search-header-row">
-            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect search-radio" for="option-1">
-                <input type="radio" id="option-1" class="mdl-radio__button" name="options" value="1" checked>
-                <span class="mdl-radio__label">日期优先</span>
-            </label>
-            <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect search-radio" for="option-2">
-                <input type="radio" id="option-2" class="mdl-radio__button" name="options" value="2">
-                <span class="mdl-radio__label">相关度优先</span>
-            </label>
+
+
             <div class="type-select-boxes">
 
                 <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect search-checkbox"
@@ -99,13 +115,28 @@
 
             </div>
 
-            <label>
-                <input class="mdl-slider mdl-js-slider" type="range"
-                       min="5" max="100" value="25" tabindex="0" id="pagelimit-slider" oninput="changeValue(this)">
-            </label>
-            <label>
-                <span class="mdl-checkbox__label" id="pagelimit-value">返回25条数据</span>
-            </label>
+
+            <div class="sort-select-boxes">
+                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect search-radio" for="option-1">
+                    <input type="radio" id="option-1" class="mdl-radio__button" name="options" value="1" checked>
+                    <span class="mdl-radio__label">日期优先</span>
+                </label>
+                <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect search-radio" for="option-2">
+                    <input type="radio" id="option-2" class="mdl-radio__button" name="options" value="2">
+                    <span class="mdl-radio__label">相关度优先</span>
+                </label>
+
+            </div>
+
+
+            <!--<label>-->
+            <!--<input class="mdl-slider mdl-js-slider" type="range"-->
+            <!--min="5" max="100" value="25" tabindex="0" id="pagelimit-slider" oninput="changeValue(this)">-->
+            <!--</label>-->
+            <!--<label>-->
+            <!--<span class="mdl-checkbox__label" id="pagelimit-value">返回25条数据</span>-->
+            <!--</label>-->
+
         </div>
 
         <!-- Tabs -->
@@ -120,14 +151,29 @@
     </header>
     <div class="mdl-layout__drawer">
         <span class="mdl-layout-title">纸糊搜索</span>
+        <nav class="mdl-navigation">
+            <a class="mdl-navigation__link" href="">首页</a>
+            <a class="mdl-navigation__link" href="">使用教程</a>
+            <a class="mdl-navigation__link" href="">设置</a>
+            <a class="mdl-navigation__link" href="">关于我们</a>
+        </nav>
     </div>
-
-
     <main class="mdl-layout__content">
         <section class="mdl-layout__tab-panel is-active" id="scroll-tab-1">
+            <section class="result-loading-animation">
+                <div class="mdl-spinner mdl-js-spinner is-active"></div>
+            </section>
+
+			<section id="image-result" class="search-result">
+			            <div id="image-total-result" class="mdl-grid"></div>
+			</section>
+
+
+
             <section id="total-result" class="search-result">
             </section>
-            <section id="total-suggest" class="suggest-right"></section>
+            <section id="total-suggest" class="suggest-right">
+            </section>
         </section>
         <section class="mdl-layout__tab-panel" id="scroll-tab-2">
             <section id="question-result" class="search-result">

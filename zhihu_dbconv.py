@@ -85,22 +85,43 @@ def main():
 	_vm = lucene.initVM(vmargs = ['-Djava.awt.headless=true'])
 	db_writer = zh_iatd.create_index_writer('.newdb')
 	db_reader = zh_iatd.create_searcher(INDEXED_FOLDER)
-	res = db_reader.searcher.search(MatchAllDocsQuery(), 100)
-	tot = 0
-	while len(res.scoreDocs) > 0:
-		for x in res.scoreDocs:
-			realdoc = db_reader.searcher.doc(x.doc)
-			obj = document_to_obj(realdoc)
-			if isinstance(obj, zh_pganlz.article):
-				if 'contents' in vars(obj.data).keys():
-					obj.data.text = obj.data.contents
-					del obj.data.contents
-			newdoc = obj_to_document(obj)
-			db_writer.addDocument(newdoc)
-			tot += 1
-			sys.stdout.write('\r{0}'.format(tot))
-			sys.stdout.flush()
-		res = db_reader.searcher.searchAfter(res.scoreDocs[-1], MatchAllDocsQuery(), 100)
+
+	if len(sys.argv) < 2:
+		res = db_reader.searcher.search(MatchAllDocsQuery(), 100)
+		tot = 0
+		while len(res.scoreDocs) > 0:
+			for x in res.scoreDocs:
+				realdoc = db_reader.searcher.doc(x.doc)
+				obj = document_to_obj(realdoc)
+				newdoc = obj_to_document(obj)
+				db_writer.addDocument(newdoc)
+				tot += 1
+				sys.stdout.write('\r{0}'.format(tot))
+				sys.stdout.flush()
+			res = db_reader.searcher.searchAfter(res.scoreDocs[-1], MatchAllDocsQuery(), 100)
+	elif sys.argv[1] == 'mergerank':
+		ranks = {}
+		with open('prrank.txt', 'r') as fin:
+			for x in fin.readlines():
+				v = x.split()
+				ranks[v[0]] = float(v[1])
+
+		res = db_reader.searcher.search(MatchAllDocsQuery(), 100)
+		tot = 0
+		while len(res.scoreDocs) > 0:
+			for x in res.scoreDocs:
+				realdoc = db_reader.searcher.doc(x.doc)
+				obj = document_to_obj(realdoc)
+				if isinstance(obj, zh_pganlz.user):
+					if obj.index in ranks.keys():
+						obj.data.rank = ranks[obj.index]
+				newdoc = obj_to_document(obj)
+				db_writer.addDocument(newdoc)
+				tot += 1
+				sys.stdout.write('\r{0}'.format(tot))
+				sys.stdout.flush()
+			res = db_reader.searcher.searchAfter(res.scoreDocs[-1], MatchAllDocsQuery(), 100)
+
 	db_writer.commit()
 
 if __name__ == '__main__':
