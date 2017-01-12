@@ -109,17 +109,17 @@ _stopped = False
 class crawl_strategy:
 	def __init__(self):
 		self.types = (
-			'question_data',
-			'user_data',
-			'topic_data',
-			'article_data',
-			'answers',
+			# 'question_data',
+			# 'user_data',
+			# 'topic_data',
+			# 'article_data',
+			# 'answers',
 			'user_followed',
-			'user_asked',
-			'question_comments',
-			'answer_comments',
-			'user_articles',
-			'article_comments',
+			# 'user_asked',
+			# 'question_comments',
+			# 'answer_comments',
+			# 'user_articles',
+			# 'article_comments',
 			'topic_children_indices',
 			'user_watched_topics'
 		)
@@ -223,10 +223,10 @@ def main():
 	else:
 		if os.path.exists('login_info'):
 			with open('login_info', 'r') as fin:
-				email = fin.readline()
-				password = fin.readline()
+				email = fin.readline().strip()
+				password = fin.readline().strip()
 			print 'Email:', email
-			print 'Password: ', '*' * len(password)
+			print 'Password:', '*' * len(password)
 		else:
 			email = raw_input('Email: ')
 			password = raw_input('Password: ')

@@ -42,6 +42,7 @@ LT_FOR_QUERY = 'Q'
 LT_HYPERTEXT = 'H'
 LT_INT = 'I'
 LT_BOOL = 'B'
+LT_FLOAT = 'F'
 
 def obj_to_json(obj):
 	res = {'index': obj.index, 'type': obj.__class__.__name__}
@@ -52,12 +53,21 @@ def obj_to_json(obj):
 			res[k] = v
 	return res
 
+def is_valid_object(obj):
+	if isinstance(obj, user):
+		return not obj.data.alias is None
+	return not obj.data.text is None
+
 def obj_to_document(obj):
 	def conv_to_str(x):
 		if isinstance(x, unicode):
 			return x.encode('utf8')
 		return str(x)
 	res = Document()
+	tstr = '1'
+	if not is_valid_object(obj):
+		tstr = '0'
+	res.add(StringField(LTPF_TYPE, tstr, Field.Store.NO))
 	res.add(StringField('index', conv_to_str(obj.index), Field.Store.YES))
 	res.add(StringField('type', obj.__class__.__name__, Field.Store.YES))
 	for k, v in vars(obj.data).items():
@@ -72,8 +82,11 @@ def obj_to_document(obj):
 				res.add(TextField(k, ' '.join(list(set(v))), Field.Store.YES))
 				fieldtype = LT_LIST
 		elif isinstance(v, str) or isinstance(v, unicode):
-			res.add(Field(k, v, Field.Store.YES, Field.Index.NO))
-			res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut_for_search(v)), Field.Store.NO))
+			if k == 'author_index':
+				res.add(StringField(k, v, Field.Store.YES))
+			else:
+				res.add(Field(k, v, Field.Store.YES, Field.Index.NO))
+				res.add(TextField(k + LTPF_FOR_QUERY, ' '.join(jieba.lcut_for_search(v)), Field.Store.NO))
 			fieldtype = LT_STRING
 		elif isinstance(v, hyper_text):
 			res.add(Field(k, v.raw, Field.Store.YES, Field.Index.NO))
@@ -89,6 +102,9 @@ def obj_to_document(obj):
 		elif isinstance(v, int) or isinstance(v, long):
 			res.add(StringField(k, str(v), Field.Store.YES))
 			fieldtype = LT_INT
+		elif isinstance(v, float):
+			res.add(StringField(k, str(v), Field.Store.YES))
+			fieldtype = LT_FLOAT
 		else:
 			raise Exception('unrecognized data type')
 		res.add(Field(k + LTPF_TYPE, fieldtype, Field.Store.YES, Field.Index.NO))
@@ -127,6 +143,8 @@ def document_to_obj(doc):
 						raise Exception('invalid bool value')
 				elif fieldtype == LT_INT:
 					setattr(obj.data, k, int(v))
+				elif fieldtype == LT_FLOAT:
+					setattr(obj.data, k, float(v))
 				else:
 					raise Exception('unrecognized property: ' + k)
 	return obj
@@ -138,6 +156,7 @@ class user_data:
 		self.followed_users = None
 		self.followed_topics = None
 		self.asked_questions = None
+		self.rank = None
 class user:
 	def __init__(self, idx = None):
 		self.index = idx
